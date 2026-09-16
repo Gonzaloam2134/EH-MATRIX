@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Matriz de Eisenhower</title>
+<meta name="description" content="Organizá tus tareas por urgencia e importancia con la Matriz de Eisenhower. Funciona offline, sin backend.">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EH Matrix">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Matriz de Eisenhower</h1>
+  <div class="header-actions">
+    <button id="btn-notify" class="icon-btn" title="Activar notificaciones de vencimiento" aria-label="Notificaciones">🔔</button>
+    <button id="btn-report" class="icon-btn" title="Reporte semanal (R)" aria-label="Reporte semanal">📊</button>
+    <button id="btn-theme" class="icon-btn" title="Cambiar tema (T)" aria-label="Cambiar tema">🌓</button>
+    <button id="btn-export" class="icon-btn" title="Exportar backup JSON" aria-label="Exportar">⬇️</button>
+    <button id="btn-import" class="icon-btn" title="Importar backup JSON" aria-label="Importar">⬆️</button>
+    <input type="file" id="import-file" accept="application/json" hidden>
+    <button id="btn-new-task" class="primary" title="Nueva tarea (N)">+ Nueva tarea</button>
+  </div>
+</header>
+
+<nav class="quadrant-nav" aria-label="Ir a cuadrante">
+  <a href="#q1" class="nav-pill nav-pill--1">🔥 Hacer <span id="nav-count-1">0</span></a>
+  <a href="#q2" class="nav-pill nav-pill--2">🧭 Planificar <span id="nav-count-2">0</span></a>
+  <a href="#q3" class="nav-pill nav-pill--3">🤝 Delegar <span id="nav-count-3">0</span></a>
+  <a href="#q4" class="nav-pill nav-pill--4">🗑️ Eliminar <span id="nav-count-4">0</span></a>
+</nav>
+
+<main class="matrix-grid">
+  <section class="quadrant quadrant--1" id="q1" data-quadrant="1">
+    <header class="quadrant-header">
+      <div class="quadrant-title">
+        <h2>🔥 Hacer ahora</h2>
+        <p class="quadrant-sub">Urgente + Importante</p>
+      </div>
+      <span class="quadrant-count" id="count-1">0</span>
+    </header>
+    <div class="quadrant-banner" id="banner-1" hidden></div>
+    <ul class="task-list" id="list-1" data-quadrant="1"></ul>
+    <details class="completed-details" id="completed-wrap-1">
+      <summary>Completadas (<span id="completed-count-1">0</span>)</summary>
+      <ul class="task-list task-list--completed" id="completed-list-1"></ul>
+    </details>
+  </section>
+
+  <section class="quadrant quadrant--2" id="q2" data-quadrant="2">
+    <header class="quadrant-header">
+      <div class="quadrant-title">
+        <h2>🧭 Planificar</h2>
+        <p class="quadrant-sub">No urgente + Importante</p>
+      </div>
+      <span class="quadrant-count" id="count-2">0</span>
+    </header>
+    <div class="quadrant-banner" id="banner-2" hidden></div>
+    <ul class="task-list" id="list-2" data-quadrant="2"></ul>
+    <details class="completed-details" id="completed-wrap-2">
+      <summary>Completadas (<span id="completed-count-2">0</span>)</summary>
+      <ul class="task-list task-list--completed" id="completed-list-2"></ul>
+    </details>
+  </section>
+
+  <section class="quadrant quadrant--3" id="q3" data-quadrant="3">
+    <header class="quadrant-header">
+      <div class="quadrant-title">
+        <h2>🤝 Delegar</h2>
+        <p class="quadrant-sub">Urgente + No importante</p>
+      </div>
+      <span class="quadrant-count" id="count-3">0</span>
+    </header>
+    <div class="quadrant-banner" id="banner-3" hidden></div>
+    <ul class="task-list" id="list-3" data-quadrant="3"></ul>
+    <details class="completed-details" id="completed-wrap-3">
+      <summary>Completadas (<span id="completed-count-3">0</span>)</summary>
+      <ul class="task-list task-list--completed" id="completed-list-3"></ul>
+    </details>
+  </section>
+
+  <section class="quadrant quadrant--4" id="q4" data-quadrant="4">
+    <header class="quadrant-header">
+      <div class="quadrant-title">
+        <h2>🗑️ Eliminar</h2>
+        <p class="quadrant-sub">No urgente + No importante</p>
+      </div>
+      <span class="quadrant-count" id="count-4">0</span>
+    </header>
+    <div class="quadrant-banner" id="banner-4" hidden></div>
+    <ul class="task-list" id="list-4" data-quadrant="4"></ul>
+    <details class="completed-details" id="completed-wrap-4">
+      <summary>Completadas (<span id="completed-count-4">0</span>)</summary>
+      <ul class="task-list task-list--completed" id="completed-list-4"></ul>
+    </details>
+  </section>
+</main>
+
+<footer class="app-footer">
+  <p>Atajos: <kbd>N</kbd> nueva tarea · <kbd>R</kbd> reporte semanal · <kbd>T</kbd> tema · <kbd>Esc</kbd> cerrar</p>
+</footer>
+
+<!-- Modal: crear/editar tarea -->
+<div class="modal-overlay" id="task-modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="task-modal-title">
+    <header class="modal-header">
+      <h2 id="task-modal-title">Nueva tarea</h2>
+      <button class="icon-btn" id="task-modal-close" aria-label="Cerrar">✕</button>
+    </header>
+    <form id="task-form">
+      <input type="hidden" id="task-id">
+
+      <label class="field">
+        <span>Título</span>
+        <input type="text" id="task-title" required maxlength="120" autocomplete="off">
+      </label>
+
+      <label class="field">
+        <span>Descripción (opcional)</span>
+        <textarea id="task-desc" rows="2" maxlength="500"></textarea>
+      </label>
+
+      <label class="field">
+        <span>Fecha límite (opcional)</span>
+        <input type="date" id="task-due">
+      </label>
+
+      <fieldset class="axis-field">
+        <legend>¿Es urgente?</legend>
+        <p class="guide-question">¿Hay una consecuencia negativa si no lo hago en las próximas 24-48hs?</p>
+        <div class="toggle-group" id="urgent-toggle" role="group" aria-label="Urgencia">
+          <button type="button" class="toggle-btn" data-axis="urgent" data-value="true">Sí, urgente</button>
+          <button type="button" class="toggle-btn" data-axis="urgent" data-value="false">No urgente</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="axis-field">
+        <legend>¿Es importante?</legend>
+        <p class="guide-question">¿Esto contribuye a mis objetivos o valores a largo plazo?</p>
+        <div class="toggle-group" id="important-toggle" role="group" aria-label="Importancia">
+          <button type="button" class="toggle-btn" data-axis="important" data-value="true">Sí, importante</button>
+          <button type="button" class="toggle-btn" data-axis="important" data-value="false">No importante</button>
+        </div>
+      </fieldset>
+
+      <div class="quadrant-preview" id="quadrant-preview">Elegí urgencia e importancia para ver el cuadrante</div>
+
+      <div class="field subtasks-field">
+        <span>Subtareas</span>
+        <ul id="subtask-list" class="subtask-list"></ul>
+        <div class="subtask-add">
+          <input type="text" id="subtask-input" placeholder="Agregar subtarea y Enter...">
+          <button type="button" id="subtask-add-btn">Agregar</button>
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" class="danger" id="task-delete-btn" hidden>Eliminar tarea</button>
+        <div class="spacer"></div>
+        <button type="button" id="task-cancel-btn">Cancelar</button>
+        <button type="submit" class="primary">Guardar</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: reporte semanal -->
+<div class="modal-overlay" id="report-modal-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+    <header class="modal-header">
+      <h2 id="report-modal-title">Reporte semanal</h2>
+      <button class="icon-btn" id="report-modal-close" aria-label="Cerrar">✕</button>
+    </header>
+    <div id="report-body" class="report-body"></div>
+  </div>
+</div>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<button id="install-btn" class="install-btn" hidden>📲 Instalar app</button>
+
+<script src="storage.js" defer></script>
+<script src="app.js" defer></script>
+</body>
+</html>
